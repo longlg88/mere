@@ -48,11 +48,15 @@ python -m venv venv
 source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 
-# 서버 실행
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# 서버 실행 (PYTHONPATH 포함)
+PYTHONPATH=/Users/eden.jang/Work/eden/mere/backend python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 테스트 실행
-python -m pytest tests/ -v
+# 테스트 실행 (PYTHONPATH 포함)
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python -m pytest tests/ -v
+
+# 개별 테스트 파일 실행
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/e2e/test_pipeline_e2e.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python test_calendar_basic.py
 ```
 
 ### iOS 앱
@@ -74,22 +78,63 @@ docker-compose restart backend
 docker-compose logs -f backend
 ```
 
-## 테스트 전략
+## 테스트 전략 및 디렉토리 구조
+
+### 테스트 파일 구조 (CRITICAL)
+```
+tests/
+├── unit/           # 단위 테스트 (개별 함수/클래스)
+├── integration/    # 통합 테스트 (서비스 간 연동) 
+├── e2e/           # End-to-End 테스트 (전체 파이프라인)
+└── acceptance/    # 수용 테스트 (15개 시나리오)
+```
+
+### 테스트 파일 생성 규칙 (MUST FOLLOW)
+- **모든 테스트 파일은 반드시 `tests/` 디렉토리 안에 생성**
+- **루트 디렉토리에 `test_*.py` 파일 생성 금지**
+- 테스트 파일명: `test_[기능명].py` 형식
+- PYTHONPATH 설정 필수: `PYTHONPATH=/Users/eden.jang/Work/eden/mere`
 
 ### Phase 1: 로컬 테스트 (Days 1-10)
-- 각 컴포넌트별 단위 테스트
-- STT, NLU, TTS 개별 성능 검증
-- 백엔드 API 통합 테스트
+```bash
+# 컴포넌트별 단위 테스트
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/unit/test_stt_service.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/unit/test_nlu_service.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/unit/test_tts_service.py
+
+# 통합 테스트  
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/integration/test_api_integration.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/integration/test_database_integration.py
+
+# E2E 테스트
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/e2e/test_pipeline_e2e.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/e2e/test_langgraph_basic.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/e2e/test_calendar_integration.py
+```
 
 ### Phase 2: 앱 통합 테스트 (Days 11-17)
-- iOS 앱을 통한 E2E 테스트
-- 오프라인/온라인 모드 전환 테스트
-- 사용자 인터랙션 테스트
+```bash
+# iOS-Backend 통합 테스트
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/e2e/test_ios_integration.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/e2e/test_websocket_integration.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/e2e/test_swiftui_websocket.py
+
+# 오프라인/온라인 모드 테스트
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/integration/test_offline_mode.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/integration/test_data_sync.py
+```
 
 ### Phase 3: 프로덕션 테스트 (Days 18-21)
-- 15개 수용 테스트 시나리오 검증
-- 성능 목표 달성 확인
-- 프로덕션 배포 준비
+```bash
+# 15개 수용 테스트 시나리오
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/acceptance/test_memo_scenarios.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/acceptance/test_todo_scenarios.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/acceptance/test_calendar_scenarios.py
+
+# 성능 및 부하 테스트
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/performance/test_load_testing.py
+PYTHONPATH=/Users/eden.jang/Work/eden/mere python tests/performance/test_response_time.py
+```
 
 ## 성능 목표
 
@@ -119,6 +164,10 @@ docker-compose logs -f backend
 4. **사용자 요청 없이** 추가 기능 구현
 5. **임시방편** 또는 더미 데이터 사용
 6. **"간단한" 방식 추천 금지** - 항상 robust하고 production-ready한 솔루션 제안
+7. **루트 디렉토리에 테스트 파일 생성 금지** - 모든 `test_*.py` 파일은 반드시 `tests/` 디렉토리 안에 생성
+8. **"간단한" / "대안" / "하드코딩" / "우회" 방식 사용 금지** - 실제 문제 원인을 찾아 근본적으로 해결
+9. **Mock / Dummy 데이터 사용 금지** - 실제 서비스와 API 연동으로만 해결
+10. **임시 해결책 제안 금지** - "임시방편", "간단한 방법", "더 쉬운 방식" 등 일체 금지
 
 ### ✅ 반드시 할 것
 1. **tasks.md 체크리스트** 지속적 업데이트
@@ -126,6 +175,7 @@ docker-compose logs -f backend
 3. **점진적 구현** 및 테스트
 4. **사용자 요청에만** 반응하여 작업
 5. **오픈소스 도구만** 사용
+6. **테스트 파일은 tests/ 디렉토리 사용** - 적절한 하위 디렉토리(unit/integration/e2e/acceptance)에 배치
 
 ## 현재 작업 상태
 

@@ -8,9 +8,8 @@ from datetime import datetime, timedelta
 import uuid
 import logging
 
-from database import SessionLocal, User, Memo, Todo, Event
-from nlu_service import Intent, NLUResult
-from calendar_service import get_calendar_processor
+from mere.core.database import SessionLocal, User, Memo, Todo, Event
+from mere.services.nlu_service import Intent, NLUResult
 
 logger = logging.getLogger(__name__)
 
@@ -334,7 +333,6 @@ class IntentActionMapper:
     def __init__(self):
         self.memo_service = MemoService()
         self.todo_service = TodoService()
-        self.calendar_processor = get_calendar_processor()
     
     async def execute_intent(self, user_id: str, nlu_result: NLUResult) -> Dict[str, Any]:
         """Execute business logic based on NLU intent"""
@@ -361,16 +359,6 @@ class IntentActionMapper:
                 return await self._handle_complete_todo(user_id, entities)
             elif intent_name == "delete_todo":
                 return await self._handle_delete_todo(user_id, entities)
-            
-            # Calendar-related intents
-            elif intent_name == "create_event":
-                return await self._handle_create_event(user_id, entities)
-            elif intent_name == "query_event":
-                return await self._handle_query_event(user_id, entities)
-            elif intent_name == "update_event":
-                return await self._handle_update_event(user_id, entities)
-            elif intent_name == "cancel_event":
-                return await self._handle_cancel_event(user_id, entities)
             
             else:
                 # Default response for unsupported intents
@@ -590,84 +578,6 @@ class IntentActionMapper:
     
     async def _handle_delete_todo(self, user_id: str, entities: Dict) -> Dict[str, Any]:
         return {"success": True, "action": "delete_todo", "message": "할일 삭제 기능은 아직 구현 중입니다."}
-    
-    # Calendar intent handlers
-    async def _handle_create_event(self, user_id: str, entities: Dict) -> Dict[str, Any]:
-        """Handle calendar event creation"""
-        try:
-            result = self.calendar_processor.process_create_event_intent(entities)
-            return {
-                "success": result["success"],
-                "action": "create_event",
-                "message": result["message"],
-                "data": result.get("event_id"),
-                "requires_confirmation": result.get("requires_confirmation", False)
-            }
-        except Exception as e:
-            logger.error(f"Calendar event creation error: {e}")
-            return {
-                "success": False,
-                "action": "create_event",
-                "message": "일정 생성 중 오류가 발생했습니다.",
-                "error": str(e)
-            }
-    
-    async def _handle_query_event(self, user_id: str, entities: Dict) -> Dict[str, Any]:
-        """Handle calendar event query"""
-        try:
-            result = self.calendar_processor.process_query_event_intent(entities)
-            return {
-                "success": result["success"],
-                "action": "query_event", 
-                "message": result["message"],
-                "data": result.get("events", [])
-            }
-        except Exception as e:
-            logger.error(f"Calendar event query error: {e}")
-            return {
-                "success": False,
-                "action": "query_event",
-                "message": "일정 조회 중 오류가 발생했습니다.",
-                "error": str(e)
-            }
-    
-    async def _handle_update_event(self, user_id: str, entities: Dict) -> Dict[str, Any]:
-        """Handle calendar event update"""
-        try:
-            result = self.calendar_processor.process_update_event_intent(entities)
-            return {
-                "success": result["success"],
-                "action": "update_event",
-                "message": result["message"],
-                "requires_confirmation": result.get("requires_confirmation", False)
-            }
-        except Exception as e:
-            logger.error(f"Calendar event update error: {e}")
-            return {
-                "success": False,
-                "action": "update_event",
-                "message": "일정 수정 중 오류가 발생했습니다.",
-                "error": str(e)
-            }
-    
-    async def _handle_cancel_event(self, user_id: str, entities: Dict) -> Dict[str, Any]:
-        """Handle calendar event cancellation"""
-        try:
-            result = self.calendar_processor.process_cancel_event_intent(entities)
-            return {
-                "success": result["success"],
-                "action": "cancel_event",
-                "message": result["message"],
-                "requires_confirmation": result.get("requires_confirmation", False)
-            }
-        except Exception as e:
-            logger.error(f"Calendar event cancellation error: {e}")
-            return {
-                "success": False,
-                "action": "cancel_event", 
-                "message": "일정 취소 중 오류가 발생했습니다.",
-                "error": str(e)
-            }
 
 # Global service instances
 memo_service = MemoService()

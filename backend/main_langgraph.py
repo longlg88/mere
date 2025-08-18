@@ -12,23 +12,13 @@ import base64
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
-from dotenv import load_dotenv
 
-# Load environment variables from .env file (look in parent directory)
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
-
-from stt_service import get_stt_service
-from nlu_service import get_nlu_service
-from tts_service import get_tts_service
-from business_services import get_intent_mapper
-
-# Import OAuth endpoints for production
-try:
-    from oauth_endpoints import router as oauth_router
-    OAUTH_AVAILABLE = True
-except ImportError:
-    OAUTH_AVAILABLE = False
-    logger.warning("OAuth endpoints not available - production calendar features disabled")
+from mere.services.stt_service import get_stt_service
+from mere.services.nlu_service import get_nlu_service
+from mere.services.enhanced_nlu_service import get_enhanced_nlu_service
+from mere.services.tts_service import get_tts_service
+from mere.core.business_services import get_intent_mapper
+from mere.core.conversation_state import get_state_manager, ConversationState
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -36,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="MERE AI Agent",
-    description="Voice-based personal assistant AI",
-    version="1.0.0"
+    description="Voice-based personal assistant AI with LangGraph State Management",
+    version="2.0.0"
 )
 
 # CORS middleware for iOS app
@@ -49,38 +39,48 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include OAuth endpoints for production calendar integration
-if OAUTH_AVAILABLE:
-    app.include_router(oauth_router)
-    logger.info("OAuth endpoints included - production calendar features enabled")
-else:
-    logger.info("OAuth endpoints not included - using development calendar mode")
-
-# Enhanced Connection Manager for WebSocket
+# Enhanced Connection Manager for WebSocket with LangGraph State
 class ConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, WebSocket] = {}
         self.user_sessions: dict[str, dict] = {}  # Store user session data
+        self.state_manager = get_state_manager()
+        self.enhanced_nlu = get_enhanced_nlu_service()
     
     async def connect(self, websocket: WebSocket, user_id: str):
         await websocket.accept()
         self.active_connections[user_id] = websocket
+        
+        # Initialize conversation state
+        conversation_id = self.state_manager.start_conversation(user_id)
+        
         self.user_sessions[user_id] = {
             "connected_at": str(datetime.now()),
             "last_activity": str(datetime.now()),
-            "message_count": 0
+            "message_count": 0,
+            "conversation_id": conversation_id,
+            "conversation_state": ConversationState.PARSING.value
         }
-        logger.info(f"User {user_id} connected")
+        logger.info(f"User {user_id} connected with conversation {conversation_id}")
         
-        # Send connection acknowledgment
+        # Send connection acknowledgment with state info
         await self.send_message({
             "type": "connection_ack",
             "user_id": user_id,
+            "conversation_id": conversation_id,
             "server_time": str(datetime.now()),
-            "message": "Successfully connected to MERE AI Agent"
+            "message": "Successfully connected to MERE AI Agent",
+            "features": ["langgraph_state_management", "context_awareness", "interruption_handling"]
         }, user_id)
     
     def disconnect(self, user_id: str):
+        # End conversation state
+        if user_id in self.user_sessions:
+            conversation_id = self.user_sessions[user_id].get("conversation_id")
+            if conversation_id:
+                self.state_manager.end_conversation(conversation_id)
+                logger.info(f"Ended conversation {conversation_id} for user {user_id}")
+        
         if user_id in self.active_connections:
             del self.active_connections[user_id]
         if user_id in self.user_sessions:
@@ -279,13 +279,180 @@ async def stream_tts(text: str):
         logger.error(f"TTS streaming failed: {e}")
         raise HTTPException(status_code=500, detail=f"TTS streaming failed: {str(e)}")
 
-# NLU + STT 통합 엔드포인트
+# Enhanced Voice Processing with LangGraph State Management
+@app.post("/api/voice/process_stateful")
+async def process_voice_command_stateful(
+    file: UploadFile = File(...),
+    user_id: str = "default_user",
+    conversation_id: Optional[str] = None,
+    language: Optional[str] = "ko"
+):
+    """음성 파일을 LangGraph 상태 관리로 처리"""
+    try:
+        # Services
+        stt_service = get_stt_service()
+        enhanced_nlu = get_enhanced_nlu_service()
+        tts_service = get_tts_service()
+        intent_mapper = get_intent_mapper()
+        
+        # STT 처리
+        supported_formats = stt_service.get_supported_formats()
+        file_ext = Path(file.filename or "").suffix.lower()
+        
+        if file_ext not in supported_formats:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported audio format: {file_ext}. Supported: {supported_formats}"
+            )
+        
+        with tempfile.NamedTemporaryFile(suffix=file_ext, delete=False) as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_path = tmp_file.name
+        
+        try:
+            # STT processing
+            start_time = datetime.now()
+            stt_result = await stt_service.transcribe_audio(tmp_path, language=language)
+            text = stt_result.get("text", "").strip()
+            
+            if not text:
+                return JSONResponse({
+                    "success": False,
+                    "error": "No speech detected",
+                    "processing_time": (datetime.now() - start_time).total_seconds()
+                })
+            
+            # Enhanced NLU with conversation context
+            contextual_nlu = enhanced_nlu.process_with_context(
+                text=text,
+                user_id=user_id,
+                conversation_id=conversation_id
+            )
+            
+            # Get conversation state
+            state_manager = get_state_manager()
+            context = state_manager.get_conversation(contextual_nlu.conversation_id)
+            
+            # Business logic execution (if in execution state)
+            business_result = None
+            if context and context.current_state == ConversationState.EXECUTION:
+                business_result = await intent_mapper.execute_intent(
+                    intent=contextual_nlu.intent.name,
+                    entities=contextual_nlu.entities,
+                    user_id=user_id
+                )
+            
+            # Generate response based on conversation state
+            response_text = _generate_state_aware_response(context, contextual_nlu, business_result)
+            
+            # TTS synthesis
+            tts_audio = await tts_service.synthesize_text(response_text)
+            audio_base64 = base64.b64encode(tts_audio).decode('utf-8') if tts_audio else None
+            
+            processing_time = (datetime.now() - start_time).total_seconds()
+            
+            return JSONResponse({
+                "success": True,
+                "conversation_id": contextual_nlu.conversation_id,
+                "conversation_state": context.current_state.value if context else "unknown",
+                "stt": {
+                    "text": text,
+                    "confidence": stt_result.get("confidence", 1.0)
+                },
+                "nlu": {
+                    "intent": contextual_nlu.intent.name,
+                    "confidence": contextual_nlu.confidence,
+                    "entities": contextual_nlu.entities,
+                    "context_entities": contextual_nlu.context_entities,
+                    "requires_confirmation": contextual_nlu.requires_confirmation,
+                    "previous_intent": contextual_nlu.previous_intent
+                },
+                "business": business_result,
+                "response": {
+                    "text": response_text,
+                    "hasAudio": audio_base64 is not None,
+                    "audioBase64": audio_base64
+                },
+                "processing_time": processing_time,
+                "state_info": {
+                    "current_state": context.current_state.value if context else "unknown",
+                    "state_transitions": _get_possible_transitions(context)
+                }
+            })
+            
+        finally:
+            # Cleanup temp file
+            os.unlink(tmp_path)
+            
+    except Exception as e:
+        logger.error(f"Enhanced voice processing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Voice processing failed: {str(e)}")
+
+def _generate_state_aware_response(context, nlu_result, business_result):
+    """Generate response based on conversation state"""
+    if not context:
+        return "처리 중 오류가 발생했습니다."
+    
+    state = context.current_state
+    
+    if state == ConversationState.CONFIRMATION:
+        return f"'{context.intent}' 작업을 실행하시겠습니까? (예/아니요로 답해주세요)"
+    
+    elif state == ConversationState.VALIDATION:
+        missing_entities = _get_missing_entities(context.intent, context.entities)
+        if missing_entities:
+            return f"추가 정보가 필요합니다: {', '.join(missing_entities)}"
+    
+    elif state == ConversationState.INTERRUPTED:
+        return f"작업이 취소되었습니다. ({context.interruption_reason})"
+    
+    elif state == ConversationState.RESPONSE and business_result:
+        if business_result.get("success"):
+            return business_result.get("response", "작업이 완료되었습니다.")
+        else:
+            return f"작업 실행 중 오류가 발생했습니다: {business_result.get('error', '알 수 없는 오류')}"
+    
+    return "요청을 처리했습니다."
+
+def _get_possible_transitions(context):
+    """Get possible state transitions from current state"""
+    if not context:
+        return []
+    
+    transitions = {
+        ConversationState.PARSING: ["validation", "interrupted", "end"],
+        ConversationState.VALIDATION: ["confirmation", "execution", "interrupted"],
+        ConversationState.CONFIRMATION: ["execution", "validation", "interrupted", "end"],
+        ConversationState.EXECUTION: ["response"],
+        ConversationState.RESPONSE: ["end"],
+        ConversationState.INTERRUPTED: ["end"]
+    }
+    
+    return transitions.get(context.current_state, [])
+
+def _get_missing_entities(intent, entities):
+    """Get list of missing required entities for intent"""
+    # This would be expanded based on intent requirements
+    required_entities = {
+        "create_memo": ["content"],
+        "create_todo": ["task"],
+        "create_event": ["title", "datetime"],
+        "delete_memo": ["memo_id"],
+        "update_todo": ["todo_id", "status"]
+    }
+    
+    required = required_entities.get(intent, [])
+    missing = [req for req in required if req not in entities]
+    return missing
+
+# Legacy endpoint (keeping for backward compatibility)
 @app.post("/api/voice/process")
 async def process_voice_command(
     file: UploadFile = File(...),
     language: Optional[str] = "ko"
 ):
-    """음성 파일을 받아서 STT + NLU 처리"""
+    """음성 파일을 받아서 STT + NLU 처리 (Legacy)"""
     try:
         # STT 처리
         stt_service = get_stt_service()
@@ -585,16 +752,65 @@ async def handle_text_command(user_id: str, data: dict):
             "timestamp": str(datetime.now())
         }, user_id)
 
-# Health endpoint
+# Health and Status Endpoints
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return JSONResponse({
-        "status": "healthy",
-        "version": "2.0.0",
-        "features": ["basic_pipeline", "stt", "nlu", "tts", "websocket"],
-        "timestamp": str(datetime.now())
-    })
+    try:
+        # Check core services
+        state_manager = get_state_manager()
+        active_conversations = len(state_manager.get_active_conversations())
+        
+        return JSONResponse({
+            "status": "healthy",
+            "version": "2.0.0",
+            "features": [
+                "langgraph_state_management",
+                "context_aware_nlu", 
+                "conversation_tracking",
+                "interruption_handling"
+            ],
+            "active_conversations": active_conversations,
+            "timestamp": str(datetime.now())
+        })
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": str(datetime.now())
+            }
+        )
+
+@app.get("/api/status/conversations")
+async def get_conversation_status():
+    """Get conversation status information"""
+    try:
+        state_manager = get_state_manager()
+        conversations = state_manager.get_active_conversations()
+        
+        return JSONResponse({
+            "active_conversations": len(conversations),
+            "conversations": [
+                {
+                    "conversation_id": conv_id,
+                    "user_id": context.user_id,
+                    "current_state": context.current_state.value,
+                    "intent": context.intent,
+                    "confidence": context.confidence,
+                    "duration": (datetime.now() - context.created_at).total_seconds()
+                }
+                for conv_id, context in conversations.items()
+            ]
+        })
+    except Exception as e:
+        logger.error(f"Status check failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
 
 if __name__ == "__main__":
     import uvicorn

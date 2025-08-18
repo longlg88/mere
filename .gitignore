@@ -111,6 +111,10 @@ logs/
 .env.test
 .env.production
 
+# Google Calendar API Credentials
+credentials.json
+token.json
+
 # Database
 *.db
 *.sqlite3

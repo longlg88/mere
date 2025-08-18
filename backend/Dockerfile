@@ -17,11 +17,17 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
-COPY backend/ .
+# Copy source code
+COPY src/ ./src/
+
+# Copy legacy backend files for compatibility
+COPY backend/Dockerfile ./
+
+# Set Python path to include src directory  
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
 
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application from new structure
+CMD ["uvicorn", "mere.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
