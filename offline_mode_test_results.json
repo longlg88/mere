@@ -1,0 +1,51 @@
+{
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "success_rate": 100.0,
+    "execution_time": 4.850069046020508
+  },
+  "details": [
+    {
+      "test": "test_offline_intent_processing",
+      "status": "PASS",
+      "timestamp": 5.1975250244140625e-05
+    },
+    {
+      "test": "test_local_data_storage",
+      "status": "PASS",
+      "timestamp": 0.5242660045623779
+    },
+    {
+      "test": "test_network_state_detection",
+      "status": "PASS",
+      "timestamp": 1.5293729305267334
+    },
+    {
+      "test": "test_data_queuing",
+      "status": "PASS",
+      "timestamp": 2.034830093383789
+    },
+    {
+      "test": "test_sync_on_reconnect",
+      "status": "PASS",
+      "timestamp": 3.138735055923462
+    },
+    {
+      "test": "test_conflict_resolution",
+      "status": "PASS",
+      "timestamp": 3.5403120517730713
+    },
+    {
+      "test": "test_offline_search",
+      "status": "PASS",
+      "timestamp": 4.046137094497681
+    },
+    {
+      "test": "test_data_persistence",
+      "status": "PASS",
+      "timestamp": 4.84971284866333
+    }
+  ]
+}

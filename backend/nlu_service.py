@@ -9,6 +9,13 @@ from openai import OpenAI
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import re
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load environment variables from project root
+project_root = Path(__file__).parent.parent
+env_path = project_root / '.env'
+load_dotenv(dotenv_path=env_path)
 
 logger = logging.getLogger(__name__)
 
@@ -93,14 +100,21 @@ CRITICAL: 응답은 반드시 JSON 형식만 출력해야 합니다. 다른 텍�
 지원하는 Intent 목록:
 {intents_str}
 
+Intent 분류 규칙 (중요!):
+- "~관련해서 뭐 적었더라?", "~에 대해 검색", "~카테고리 찾기" → search_by_category 사용
+- "~관련해서 자주 하는", "~패턴", "~분석" → analyze_pattern 사용
+- "메모 보기", "메모 찾기" (구체적 메모) → query_memo 사용
+- "완료했어", "다 했어", "끝났어" + 카테고리 → complete_todo + category entity 필수
+- "오늘", "내일", "어제", "이번주" 등 시간 표현은 ALWAYS date_time entity에 추출
+
 Entity 추출 규칙 (정확히 추출하세요):
 - item_name: 메모/할일/이벤트의 제목이나 내용 (핵심 키워드)
-- date_time: 날짜/시간 정보 (내일, 오후 3시, 다음주, 월요일, 12월 25일 등)
+- date_time: 날짜/시간 정보 (내일, 오후 3시, 다음주, 월요일, 12월 25일, 오늘, 어제, 이번주 등) - 시간 표현이 있으면 반드시 추출
 - priority: 우선순위 (긴급, 중요, 높음, 낮음, 보통 등)
 - duration: 소요 시간 (30분, 2시간, 하루 종일 등)
 - location: 장소 정보 (회사, 집, 카페, 강남역, 온라인 등)
 - person: 사람 이름이나 관계 (김철수, 팀장님, 가족, 친구 등)
-- category: 카테고리 (업무, 개인, 쇼핑, 건강, 학습 등)
+- category: 카테고리 (업무, 개인, 쇼핑, 건강, 학습, 프로젝트 등) - "~관련", "~에 대해" 표현 시 반드시 추출
 - reminder_time: 알림 시간 (10분 전, 하루 전, 아침에 등)
 - repeat_pattern: 반복 패턴 (매일, 매주, 매월, 평일마다 등)
 - status: 상태 정보 (완료, 진행중, 대기, 취소 등)

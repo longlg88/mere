@@ -1,19 +1,27 @@
 import Foundation
 import Combine
 
-/// AI service that integrates STT, NLU, and TTS through the backend API
+/// AI service that integrates STT, NLU, and TTS through the backend API with offline support
 @MainActor
 class AIService: ObservableObject {
+    
+    static let shared = AIService()
     
     // MARK: - Published Properties
     @Published var isProcessing = false
     @Published var lastResponse: AIResponse?
     @Published var error: AIError?
+    @Published var isOfflineMode = false
     
     // MARK: - Private Properties
     private var baseURL: String
     private var urlSession: URLSession
     private var cancellables = Set<AnyCancellable>()
+    
+    // Offline components
+    private let networkMonitor = NetworkMonitor.shared
+    private let offlineProcessor = OfflineIntentProcessor.shared
+    private let localDataManager = LocalDataManager.shared
     
     // MARK: - Initialization
     init(baseURL: String = "http://localhost:8000") {
@@ -23,6 +31,19 @@ class AIService: ObservableObject {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         self.urlSession = URLSession(configuration: config)
+        
+        setupNetworkMonitoring()
+    }
+    
+    private func setupNetworkMonitoring() {
+        // Monitor network changes
+        networkMonitor.$isConnected
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isConnected in
+                self?.isOfflineMode = !isConnected
+                print("🌐 AIService mode: \(isConnected ? "Online" : "Offline")")
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Configuration
@@ -38,8 +59,13 @@ class AIService: ObservableObject {
         error = nil
         
         do {
-            let response = try await uploadAudioFile(audioData: audioData, filename: filename)
-            lastResponse = response
+            if isOfflineMode {
+                let response = try await processOfflineCommand(audioData: audioData, filename: filename)
+                lastResponse = response
+            } else {
+                let response = try await uploadAudioFile(audioData: audioData, filename: filename)
+                lastResponse = response
+            }
         } catch {
             if let aiError = error as? AIError {
                 self.error = aiError
@@ -49,6 +75,108 @@ class AIService: ObservableObject {
         }
         
         isProcessing = false
+    }
+    
+    // MARK: - Offline Processing
+    private func processOfflineCommand(audioData: Data, filename: String) async throws -> AIResponse {
+        // For now, simulate STT with a placeholder text
+        // In a real implementation, you would use on-device STT like Apple's Speech framework
+        let sttText = await performOfflineSTT(audioData: audioData)
+        
+        // Process intent offline
+        let (intent, responseText) = offlineProcessor.processIntent(from: sttText)
+        
+        // Create offline response
+        let sttResponse = STTResponse(
+            success: true,
+            text: sttText,
+            confidence: 0.8, // Simulated confidence
+            language: "ko"
+        )
+        
+        let nluResponse = NLUResponse(
+            intent: intent.type,
+            confidence: intent.confidence,
+            entities: intent.entities
+        )
+        
+        let responseData = ResponseData(
+            text: responseText + "\n\n[오프라인 모드]",
+            audioBase64: nil // No TTS in offline mode for now
+        )
+        
+        return AIResponse(
+            stt: sttResponse,
+            nlu: nluResponse,
+            response: responseData
+        )
+    }
+    
+    private func performOfflineSTT(audioData: Data) async -> String {
+        // This is a placeholder for offline STT
+        // In a real implementation, you would use:
+        // 1. Apple's Speech framework for on-device recognition
+        // 2. Whisper.cpp for local processing
+        // 3. Other on-device STT solutions
+        
+        // For demonstration, return a placeholder
+        return "오프라인 명령"
+    }
+    
+    // MARK: - Text-only Processing (for offline mode)
+    func processTextCommand(_ text: String) async {
+        guard !isProcessing else { return }
+        
+        isProcessing = true
+        error = nil
+        
+        do {
+            if isOfflineMode {
+                let response = try await processOfflineTextCommand(text)
+                lastResponse = response
+            } else {
+                // Could implement online text processing if needed
+                throw AIError.serverError("Text-only processing not implemented for online mode")
+            }
+        } catch {
+            if let aiError = error as? AIError {
+                self.error = aiError
+            } else {
+                self.error = .networkError(error)
+            }
+        }
+        
+        isProcessing = false
+    }
+    
+    private func processOfflineTextCommand(_ text: String) async throws -> AIResponse {
+        // Process intent offline
+        let (intent, responseText) = offlineProcessor.processIntent(from: text)
+        
+        // Create offline response
+        let sttResponse = STTResponse(
+            success: true,
+            text: text,
+            confidence: 1.0, // Perfect confidence for text input
+            language: "ko"
+        )
+        
+        let nluResponse = NLUResponse(
+            intent: intent.type,
+            confidence: intent.confidence,
+            entities: intent.entities
+        )
+        
+        let responseData = ResponseData(
+            text: responseText + "\n\n[오프라인 모드]",
+            audioBase64: nil
+        )
+        
+        return AIResponse(
+            stt: sttResponse,
+            nlu: nluResponse,
+            response: responseData
+        )
     }
     
     private func uploadAudioFile(audioData: Data, filename: String) async throws -> AIResponse {

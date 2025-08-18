@@ -1,0 +1,27 @@
+{
+  "scenario": "conflict_resolution",
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "success_rate": 100.0,
+    "execution_time": 0.20244884490966797
+  },
+  "details": [
+    {
+      "test": "test_conflict_resolution",
+      "status": "PASS",
+      "timestamp": 0.2022097110748291
+    },
+    {
+      "test": "test_complex_conflicts",
+      "status": "PASS",
+      "timestamp": 0.20223164558410645
+    },
+    {
+      "test": "test_concurrent_modifications",
+      "status": "PASS",
+      "timestamp": 0.20224285125732422
+    }
+  ]
+}
