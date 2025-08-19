@@ -21,11 +21,22 @@ class DataSyncManager: ObservableObject {
     @Published var syncProgress: Double = 0.0
     @Published var syncMessage: String = ""
     
-    enum SyncState {
+    enum SyncState: Equatable {
         case idle
         case syncing
         case completed
         case failed(Error)
+        
+        static func == (lhs: SyncState, rhs: SyncState) -> Bool {
+            switch (lhs, rhs) {
+            case (.idle, .idle), (.syncing, .syncing), (.completed, .completed):
+                return true
+            case (.failed, .failed):
+                return true
+            default:
+                return false
+            }
+        }
         
         var description: String {
             switch self {
@@ -210,11 +221,9 @@ class DataSyncManager: ObservableObject {
     // MARK: - Individual Item Sync
     
     private func syncMemoToServer(_ memo: MemoEntity) async throws {
-        guard let aiService = AIService.shared else {
-            throw SyncError.serviceUnavailable
-        }
+        let aiService = AIService.shared
         
-        let memoData: [String: Any] = [
+        let _: [String: Any] = [
             "id": memo.memoId ?? UUID().uuidString,
             "title": memo.title ?? "",
             "content": memo.content ?? "",
@@ -222,7 +231,7 @@ class DataSyncManager: ObservableObject {
             "priority": memo.priority ?? "",
             "created_at": memo.createdAt ?? Date(),
             "updated_at": memo.updatedAt ?? Date(),
-            "is_deleted": memo.isDeleted
+            "is_deleted": memo.softDeleted
         ]
         
         // This would typically be an API call to sync with backend
@@ -232,9 +241,7 @@ class DataSyncManager: ObservableObject {
     }
     
     private func syncTodoToServer(_ todo: TodoEntity) async throws {
-        guard let aiService = AIService.shared else {
-            throw SyncError.serviceUnavailable
-        }
+        let aiService = AIService.shared
         
         let todoData: [String: Any] = [
             "id": todo.todoId ?? UUID().uuidString,
@@ -244,11 +251,11 @@ class DataSyncManager: ObservableObject {
             "priority": todo.priority ?? "",
             "category": todo.category ?? "",
             "status": todo.status ?? "pending",
-            "is_completed": todo.isCompleted,
+            "is_completed": todo.taskCompleted,
             "completed_at": todo.completedAt as Any,
             "created_at": todo.createdAt ?? Date(),
             "updated_at": todo.updatedAt ?? Date(),
-            "is_deleted": todo.isDeleted
+            "is_deleted": todo.softDeleted
         ]
         
         try await simulateServerSync(delay: 0.1)
@@ -256,11 +263,9 @@ class DataSyncManager: ObservableObject {
     }
     
     private func syncEventToServer(_ event: EventEntity) async throws {
-        guard let aiService = AIService.shared else {
-            throw SyncError.serviceUnavailable
-        }
+        let aiService = AIService.shared
         
-        let eventData: [String: Any] = [
+        let _: [String: Any] = [
             "id": event.eventId ?? UUID().uuidString,
             "title": event.title ?? "",
             "description": event.eventDescription ?? "",
@@ -271,7 +276,7 @@ class DataSyncManager: ObservableObject {
             "repeat_pattern": event.repeatPattern ?? "",
             "created_at": event.createdAt ?? Date(),
             "updated_at": event.updatedAt ?? Date(),
-            "is_deleted": event.isDeleted
+            "is_deleted": event.softDeleted
         ]
         
         try await simulateServerSync(delay: 0.1)

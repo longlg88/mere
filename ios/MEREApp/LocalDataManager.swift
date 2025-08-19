@@ -37,7 +37,7 @@ class LocalDataManager: ObservableObject {
     
     private func loadMemos() {
         let request: NSFetchRequest<MemoEntity> = MemoEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isDeleted == NO")
+        request.predicate = NSPredicate(format: "softDeleted == NO")
         request.sortDescriptors = [NSSortDescriptor(keyPath: \MemoEntity.createdAt, ascending: false)]
         
         memos = coreDataStack.fetch(request)
@@ -45,7 +45,7 @@ class LocalDataManager: ObservableObject {
     
     private func loadTodos() {
         let request: NSFetchRequest<TodoEntity> = TodoEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isDeleted == NO")
+        request.predicate = NSPredicate(format: "softDeleted == NO")
         request.sortDescriptors = [NSSortDescriptor(keyPath: \TodoEntity.createdAt, ascending: false)]
         
         todos = coreDataStack.fetch(request)
@@ -53,7 +53,7 @@ class LocalDataManager: ObservableObject {
     
     private func loadEvents() {
         let request: NSFetchRequest<EventEntity> = EventEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isDeleted == NO")
+        request.predicate = NSPredicate(format: "softDeleted == NO")
         request.sortDescriptors = [NSSortDescriptor(keyPath: \EventEntity.scheduledAt, ascending: true)]
         
         events = coreDataStack.fetch(request)
@@ -73,8 +73,8 @@ class LocalDataManager: ObservableObject {
         memo.userId = getCurrentUserId()
         memo.createdAt = Date()
         memo.updatedAt = Date()
-        memo.isSynced = false
-        memo.isDeleted = false
+        memo.needsSync = true
+        memo.softDeleted = false
         
         coreDataStack.save()
         loadMemos()
@@ -90,7 +90,7 @@ class LocalDataManager: ObservableObject {
         memo.category = category
         memo.priority = priority
         memo.updatedAt = Date()
-        memo.isSynced = false
+        memo.needsSync = true
         
         coreDataStack.save()
         loadMemos()
@@ -100,9 +100,9 @@ class LocalDataManager: ObservableObject {
     }
     
     func deleteMemo(_ memo: MemoEntity) {
-        memo.isDeleted = true
+        memo.softDeleted = true
         memo.updatedAt = Date()
-        memo.isSynced = false
+        memo.needsSync = true
         
         coreDataStack.save()
         loadMemos()
@@ -124,12 +124,12 @@ class LocalDataManager: ObservableObject {
         todo.priority = priority
         todo.category = category
         todo.status = "pending"
-        todo.isCompleted = false
+        todo.taskCompleted = false
         todo.userId = getCurrentUserId()
         todo.createdAt = Date()
         todo.updatedAt = Date()
-        todo.isSynced = false
-        todo.isDeleted = false
+        todo.needsSync = true
+        todo.softDeleted = false
         
         coreDataStack.save()
         loadTodos()
@@ -147,7 +147,7 @@ class LocalDataManager: ObservableObject {
         if let category = category { todo.category = category }
         
         todo.updatedAt = Date()
-        todo.isSynced = false
+        todo.needsSync = true
         
         coreDataStack.save()
         loadTodos()
@@ -157,11 +157,11 @@ class LocalDataManager: ObservableObject {
     }
     
     func completeTodo(_ todo: TodoEntity) {
-        todo.isCompleted = true
+        todo.taskCompleted = true
         todo.status = "completed"
         todo.completedAt = Date()
         todo.updatedAt = Date()
-        todo.isSynced = false
+        todo.needsSync = true
         
         coreDataStack.save()
         loadTodos()
@@ -171,9 +171,9 @@ class LocalDataManager: ObservableObject {
     }
     
     func deleteTodo(_ todo: TodoEntity) {
-        todo.isDeleted = true
+        todo.softDeleted = true
         todo.updatedAt = Date()
-        todo.isSynced = false
+        todo.needsSync = true
         
         coreDataStack.save()
         loadTodos()
@@ -199,8 +199,8 @@ class LocalDataManager: ObservableObject {
         event.userId = getCurrentUserId()
         event.createdAt = Date()
         event.updatedAt = Date()
-        event.isSynced = false
-        event.isDeleted = false
+        event.needsSync = true
+        event.softDeleted = false
         
         coreDataStack.save()
         loadEvents()
@@ -219,7 +219,7 @@ class LocalDataManager: ObservableObject {
         if let participants = participants { event.participants = participants }
         
         event.updatedAt = Date()
-        event.isSynced = false
+        event.needsSync = true
         
         coreDataStack.save()
         loadEvents()
@@ -229,9 +229,9 @@ class LocalDataManager: ObservableObject {
     }
     
     func deleteEvent(_ event: EventEntity) {
-        event.isDeleted = true
+        event.softDeleted = true
         event.updatedAt = Date()
-        event.isSynced = false
+        event.needsSync = true
         
         coreDataStack.save()
         loadEvents()
@@ -244,13 +244,13 @@ class LocalDataManager: ObservableObject {
     
     func getUnsyncedItems() -> (memos: [MemoEntity], todos: [TodoEntity], events: [EventEntity]) {
         let memoRequest: NSFetchRequest<MemoEntity> = MemoEntity.fetchRequest()
-        memoRequest.predicate = NSPredicate(format: "isSynced == NO")
+        memoRequest.predicate = NSPredicate(format: "needsSync == YES")
         
         let todoRequest: NSFetchRequest<TodoEntity> = TodoEntity.fetchRequest()
-        todoRequest.predicate = NSPredicate(format: "isSynced == NO")
+        todoRequest.predicate = NSPredicate(format: "needsSync == YES")
         
         let eventRequest: NSFetchRequest<EventEntity> = EventEntity.fetchRequest()
-        eventRequest.predicate = NSPredicate(format: "isSynced == NO")
+        eventRequest.predicate = NSPredicate(format: "needsSync == YES")
         
         return (
             memos: coreDataStack.fetch(memoRequest),
@@ -260,19 +260,19 @@ class LocalDataManager: ObservableObject {
     }
     
     func markAsSynced(memo: MemoEntity) {
-        memo.isSynced = true
+        memo.needsSync = false
         coreDataStack.save()
         updateUnsyncedCount()
     }
     
     func markAsSynced(todo: TodoEntity) {
-        todo.isSynced = true
+        todo.needsSync = false
         coreDataStack.save()
         updateUnsyncedCount()
     }
     
     func markAsSynced(event: EventEntity) {
-        event.isSynced = true
+        event.needsSync = false
         coreDataStack.save()
         updateUnsyncedCount()
     }
@@ -294,7 +294,7 @@ class LocalDataManager: ObservableObject {
     
     func searchMemos(query: String) -> [MemoEntity] {
         let request: NSFetchRequest<MemoEntity> = MemoEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isDeleted == NO AND (content CONTAINS[c] %@ OR title CONTAINS[c] %@)", query, query)
+        request.predicate = NSPredicate(format: "softDeleted == NO AND (content CONTAINS[c] %@ OR title CONTAINS[c] %@)", query, query)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \MemoEntity.updatedAt, ascending: false)]
         
         return coreDataStack.fetch(request)
@@ -302,7 +302,7 @@ class LocalDataManager: ObservableObject {
     
     func searchTodos(query: String) -> [TodoEntity] {
         let request: NSFetchRequest<TodoEntity> = TodoEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isDeleted == NO AND (title CONTAINS[c] %@ OR todoDescription CONTAINS[c] %@)", query, query)
+        request.predicate = NSPredicate(format: "softDeleted == NO AND (title CONTAINS[c] %@ OR todoDescription CONTAINS[c] %@)", query, query)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \TodoEntity.updatedAt, ascending: false)]
         
         return coreDataStack.fetch(request)
@@ -310,7 +310,7 @@ class LocalDataManager: ObservableObject {
     
     func getTodosByCategory(_ category: String) -> [TodoEntity] {
         let request: NSFetchRequest<TodoEntity> = TodoEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isDeleted == NO AND category == %@", category)
+        request.predicate = NSPredicate(format: "softDeleted == NO AND category == %@", category)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \TodoEntity.createdAt, ascending: false)]
         
         return coreDataStack.fetch(request)
@@ -318,7 +318,7 @@ class LocalDataManager: ObservableObject {
     
     func getUpcomingEvents(limit: Int = 10) -> [EventEntity] {
         let request: NSFetchRequest<EventEntity> = EventEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "isDeleted == NO AND scheduledAt >= %@", Date() as NSDate)
+        request.predicate = NSPredicate(format: "softDeleted == NO AND scheduledAt >= %@", Date() as NSDate)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \EventEntity.scheduledAt, ascending: true)]
         request.fetchLimit = limit
         

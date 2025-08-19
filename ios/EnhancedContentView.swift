@@ -149,7 +149,7 @@ struct EnhancedContentView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 16) {
-                    ForEach(conversationHistory) { item in
+                    ForEach(conversationHistory, id: \.id) { item in
                         EnhancedConversationBubble(item: item)
                             .environmentObject(audioManager)
                             .environmentObject(aiService)
@@ -273,7 +273,7 @@ struct EnhancedContentView: View {
                 }
         )
         .disabled(audioManager.permissionStatus != .granted || aiService.isProcessing)
-        .hapticFeedback(.impact(.medium), trigger: audioManager.isRecording)
+        .hapticFeedback(.medium, trigger: audioManager.isRecording)
     }
     
     private var statusAndTipsView: some View {
@@ -343,7 +343,7 @@ struct EnhancedContentView: View {
         
         let userMessage = ConversationItem(
             id: UUID(),
-            type: .user,
+            type: MessageType.user,
             content: "🎤 녹음 중...",
             timestamp: Date(),
             isProcessing: true
@@ -378,11 +378,11 @@ struct EnhancedContentView: View {
                     // Add AI response with metadata
                     let aiResponse = ConversationItem(
                         id: UUID(),
-                        type: .ai,
+                        type: MessageType.ai,
                         content: response.response.text,
                         timestamp: Date(),
                         processingTime: processingTime,
-                        confidence: response.nlu.confidence,
+                        confidence: Float(response.nlu.confidence),
                         hasAudio: response.response.hasAudio
                     )
                     conversationHistory.append(aiResponse)
@@ -500,7 +500,7 @@ struct EnhancedConversationBubble: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            if item.type == .ai {
+            if item.type == MessageType.ai {
                 // AI avatar
                 Circle()
                     .fill(LinearGradient(
@@ -518,7 +518,7 @@ struct EnhancedConversationBubble: View {
             VStack(alignment: item.type == .user ? .trailing : .leading, spacing: 8) {
                 // Message bubble
                 HStack(alignment: .bottom, spacing: 8) {
-                    if item.type == .ai {
+                    if item.type == MessageType.ai {
                         VStack(alignment: .leading, spacing: 4) {
                             messageBubble
                             messageMetadata
@@ -584,7 +584,7 @@ struct EnhancedConversationBubble: View {
     
     private var messageMetadata: some View {
         Group {
-            if item.type == .ai {
+            if item.type == MessageType.ai {
                 HStack(spacing: 12) {
                     if let processingTime = item.processingTime {
                         Label("\(String(format: "%.1fs", processingTime))", systemImage: "clock")
@@ -765,23 +765,6 @@ struct HelpSection: View {
 }
 
 // MARK: - Enhanced Supporting Types
-extension ConversationItem {
-    init(id: UUID, type: MessageType, content: String, timestamp: Date, isProcessing: Bool = false, processingTime: TimeInterval? = nil, confidence: Float? = nil, hasAudio: Bool = false) {
-        self.id = id
-        self.type = type
-        self.content = content
-        self.timestamp = timestamp
-        self.isProcessing = isProcessing
-        self.processingTime = processingTime
-        self.confidence = confidence
-        self.hasAudio = hasAudio
-    }
-    
-    var isProcessing: Bool = false
-    var processingTime: TimeInterval?
-    var confidence: Float?
-    var hasAudio: Bool = false
-}
 
 extension ConnectionState {
     var isConnected: Bool {
