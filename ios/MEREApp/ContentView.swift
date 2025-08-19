@@ -414,17 +414,6 @@ struct SettingsView: View {
 }
 
 // MARK: - Supporting Types
-struct ConversationItem: Identifiable {
-    let id: UUID
-    let type: MessageType
-    var content: String
-    let timestamp: Date
-    
-    enum MessageType {
-        case user
-        case ai
-    }
-}
 
 extension DateFormatter {
     static let timeOnly: DateFormatter = {

@@ -1,0 +1,51 @@
+{
+  "summary": {
+    "passed": 5,
+    "failed": 3,
+    "total": 8,
+    "success_rate": 62.5,
+    "execution_time": 6.930714845657349
+  },
+  "details": [
+    {
+      "test": "test_embedding_generation",
+      "status": "PASS",
+      "timestamp": 3.2640221118927
+    },
+    {
+      "test": "test_semantic_similarity",
+      "status": "FAIL",
+      "timestamp": 4.517866134643555
+    },
+    {
+      "test": "test_document_indexing",
+      "status": "PASS",
+      "timestamp": 4.721100807189941
+    },
+    {
+      "test": "test_semantic_search",
+      "status": "PASS",
+      "timestamp": 5.067820072174072
+    },
+    {
+      "test": "test_batch_operations",
+      "status": "FAIL",
+      "timestamp": 6.694080114364624
+    },
+    {
+      "test": "test_hybrid_search_logic",
+      "status": "PASS",
+      "timestamp": 6.702594757080078
+    },
+    {
+      "test": "test_search_performance",
+      "status": "PASS",
+      "timestamp": 6.802766799926758
+    },
+    {
+      "test": "test_multilingual_support",
+      "status": "FAIL",
+      "timestamp": 6.930422782897949
+    }
+  ]
+}

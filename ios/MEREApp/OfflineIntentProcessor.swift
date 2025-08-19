@@ -224,7 +224,7 @@ class OfflineIntentProcessor: ObservableObject {
         let category = intent.entities["category"] as? String
         let priority = intent.entities["priority"] as? String
         
-        let memo = localDataManager.createMemo(
+        _ = localDataManager.createMemo(
             title: nil,
             content: content,
             category: category,
@@ -270,7 +270,7 @@ class OfflineIntentProcessor: ObservableObject {
     
     private func executeTodoCompletion(intent: OfflineIntent) -> String {
         // For offline mode, complete the most recent incomplete todo
-        let incompleteTodos = localDataManager.todos.filter { !$0.isCompleted && !$0.isDeleted }
+        let incompleteTodos = localDataManager.todos.filter { !$0.taskCompleted && !$0.softDeleted }
         
         if let todo = incompleteTodos.first {
             localDataManager.completeTodo(todo)
@@ -321,7 +321,7 @@ class OfflineIntentProcessor: ObservableObject {
     }
     
     private func executeQueryTodo() -> String {
-        let incompleteTodos = localDataManager.todos.filter { !$0.isCompleted && !$0.isDeleted }
+        let incompleteTodos = localDataManager.todos.filter { !$0.taskCompleted && !$0.softDeleted }
         if incompleteTodos.isEmpty {
             return "남은 할일이 없습니다."
         }

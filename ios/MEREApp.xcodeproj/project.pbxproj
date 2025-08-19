@@ -7,27 +7,54 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		91A5B8C92C8123456789ABCD /* MEREApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A5B8C82C8123456789ABCD /* MEREApp.swift */; };
-		91A5B8CB2C8123456789ABCD /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A5B8CA2C8123456789ABCD /* ContentView.swift */; };
-		91A5B8CD2C8123456789ABCD /* EnhancedContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A5B8CC2C8123456789ABCD /* EnhancedContentView.swift */; };
-		91A5B8CF2C8123456789ABCD /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A5B8CE2C8123456789ABCD /* AudioManager.swift */; };
-		91A5B8D12C8123456789ABCD /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A5B8D02C8123456789ABCD /* WebSocketManager.swift */; };
-		91A5B8D32C8123456789ABCD /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A5B8D22C8123456789ABCD /* AIService.swift */; };
-		91A5B8D52C8123456789ABCD /* WebSocketTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A5B8D42C8123456789ABCD /* WebSocketTestView.swift */; };
-		91A5B8D72C8123456789ABCD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91A5B8D62C8123456789ABCD /* Assets.xcassets */; };
+		7F6EC6302E54531200498F27 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7F6EC61E2E54531200498F27 /* Assets.xcassets */; };
+		7F6EC6332E54531200498F27 /* EnhancedContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC61B2E54531200498F27 /* EnhancedContentView.swift */; };
+		7F6EC6342E54531200498F27 /* MEREApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6262E54531200498F27 /* MEREApp.swift */; };
+		7F6EC6352E54531200498F27 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6272E54531200498F27 /* NetworkMonitor.swift */; };
+		7F6EC6362E54531200498F27 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6202E54531200498F27 /* ContentView.swift */; };
+		7F6EC6372E54531200498F27 /* WebSocketTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC62B2E54531200498F27 /* WebSocketTestView.swift */; };
+		7F6EC6382E54531200498F27 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6212E54531200498F27 /* CoreDataStack.swift */; };
+		7F6EC63A2E54531200498F27 /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC61D2E54531200498F27 /* AIService.swift */; };
+		7F6EC63D2E54531200498F27 /* DataSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6222E54531200498F27 /* DataSyncManager.swift */; };
+		7F6EC63E2E54531200498F27 /* WebSocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC62D2E54531200498F27 /* WebSocketManager.swift */; };
+		7F6EC6402E54531200498F27 /* LocalDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6242E54531200498F27 /* LocalDataManager.swift */; };
+		7F6EC6422E54531200498F27 /* MERE.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6252E54531200498F27 /* MERE.xcdatamodeld */; };
+		7F6EC6432E54531200498F27 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC61F2E54531200498F27 /* AudioManager.swift */; };
+		7F6EC6442E54531200498F27 /* OfflineIntentProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6282E54531200498F27 /* OfflineIntentProcessor.swift */; };
+		7F6EC6502E54531200498F27 /* EventEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6502E54531200498F28 /* EventEntity.swift */; };
+		7F6EC6512E54531200498F27 /* MemoEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6512E54531200498F28 /* MemoEntity.swift */; };
+		7F6EC6522E54531200498F27 /* TodoEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6522E54531200498F28 /* TodoEntity.swift */; };
+		7F6EC6532E54531200498F27 /* ConversationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6EC6532E54531200498F28 /* ConversationModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7F6EC6182E54531200498F27 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIService.swift; sourceTree = "<group>"; };
+		7F6EC6192E54531200498F27 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		7F6EC61A2E54531200498F27 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7F6EC61B2E54531200498F27 /* EnhancedContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedContentView.swift; sourceTree = "<group>"; };
+		7F6EC61C2E54531200498F27 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7F6EC61D2E54531200498F27 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIService.swift; sourceTree = "<group>"; };
+		7F6EC61E2E54531200498F27 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7F6EC61F2E54531200498F27 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		7F6EC6202E54531200498F27 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7F6EC6212E54531200498F27 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
+		7F6EC6222E54531200498F27 /* DataSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSyncManager.swift; sourceTree = "<group>"; };
+		7F6EC6232E54531200498F27 /* EnhancedContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedContentView.swift; sourceTree = "<group>"; };
+		7F6EC6242E54531200498F27 /* LocalDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDataManager.swift; sourceTree = "<group>"; };
+		7F6EC6262E54531200498F27 /* MEREApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MEREApp.swift; sourceTree = "<group>"; };
+		7F6EC6272E54531200498F27 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		7F6EC6282E54531200498F27 /* OfflineIntentProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineIntentProcessor.swift; sourceTree = "<group>"; };
+		7F6EC6292E54531200498F27 /* project.pbxproj */ = {isa = PBXFileReference; lastKnownFileType = text.pbxproject; path = project.pbxproj; sourceTree = "<group>"; };
+		7F6EC62A2E54531200498F27 /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
+		7F6EC62B2E54531200498F27 /* WebSocketTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketTestView.swift; sourceTree = "<group>"; };
+		7F6EC62D2E54531200498F27 /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
+		7F6EC62E2E54531200498F27 /* WebSocketTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketTestView.swift; sourceTree = "<group>"; };
+		7F6EC62F2E54531200498F27 /* MERE.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = MERE.xcdatamodel; sourceTree = "<group>"; };
+		7F6EC6502E54531200498F28 /* EventEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventEntity.swift; sourceTree = "<group>"; };
+		7F6EC6512E54531200498F28 /* MemoEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoEntity.swift; sourceTree = "<group>"; };
+		7F6EC6522E54531200498F28 /* TodoEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoEntity.swift; sourceTree = "<group>"; };
+		7F6EC6532E54531200498F28 /* ConversationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationModels.swift; sourceTree = "<group>"; };
 		91A5B8C52C8123456789ABCD /* MEREApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MEREApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		91A5B8C82C8123456789ABCD /* MEREApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MEREApp.swift; sourceTree = "<group>"; };
-		91A5B8CA2C8123456789ABCD /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		91A5B8CC2C8123456789ABCD /* EnhancedContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedContentView.swift; sourceTree = "<group>"; };
-		91A5B8CE2C8123456789ABCD /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
-		91A5B8D02C8123456789ABCD /* WebSocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketManager.swift; sourceTree = "<group>"; };
-		91A5B8D22C8123456789ABCD /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIService.swift; sourceTree = "<group>"; };
-		91A5B8D42C8123456789ABCD /* WebSocketTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketTestView.swift; sourceTree = "<group>"; };
-		91A5B8D62C8123456789ABCD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		91A5B8DB2C8123456789ABCD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,10 +68,43 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7F6EC62C2E54531200498F27 /* MEREApp */ = {
+			isa = PBXGroup;
+			children = (
+				7F6EC61D2E54531200498F27 /* AIService.swift */,
+				7F6EC61E2E54531200498F27 /* Assets.xcassets */,
+				7F6EC61F2E54531200498F27 /* AudioManager.swift */,
+				7F6EC6202E54531200498F27 /* ContentView.swift */,
+				7F6EC6532E54531200498F28 /* ConversationModels.swift */,
+				7F6EC6212E54531200498F27 /* CoreDataStack.swift */,
+				7F6EC6222E54531200498F27 /* DataSyncManager.swift */,
+				7F6EC6232E54531200498F27 /* EnhancedContentView.swift */,
+				7F6EC6502E54531200498F28 /* EventEntity.swift */,
+				7F6EC6242E54531200498F27 /* LocalDataManager.swift */,
+				7F6EC6252E54531200498F27 /* MERE.xcdatamodeld */,
+				7F6EC6262E54531200498F27 /* MEREApp.swift */,
+				7F6EC6512E54531200498F28 /* MemoEntity.swift */,
+				7F6EC6272E54531200498F27 /* NetworkMonitor.swift */,
+				7F6EC6282E54531200498F27 /* OfflineIntentProcessor.swift */,
+				7F6EC6292E54531200498F27 /* project.pbxproj */,
+				7F6EC6522E54531200498F28 /* TodoEntity.swift */,
+				7F6EC62A2E54531200498F27 /* WebSocketManager.swift */,
+				7F6EC62B2E54531200498F27 /* WebSocketTestView.swift */,
+			);
+			path = MEREApp;
+			sourceTree = "<group>";
+		};
 		91A5B8BC2C8123456789ABCD = {
 			isa = PBXGroup;
 			children = (
-				91A5B8C72C8123456789ABCD /* MEREApp */,
+				7F6EC6182E54531200498F27 /* AIService.swift */,
+				7F6EC6192E54531200498F27 /* AudioManager.swift */,
+				7F6EC61A2E54531200498F27 /* ContentView.swift */,
+				7F6EC61B2E54531200498F27 /* EnhancedContentView.swift */,
+				7F6EC61C2E54531200498F27 /* Info.plist */,
+				7F6EC62C2E54531200498F27 /* MEREApp */,
+				7F6EC62D2E54531200498F27 /* WebSocketManager.swift */,
+				7F6EC62E2E54531200498F27 /* WebSocketTestView.swift */,
 				91A5B8C62C8123456789ABCD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -55,22 +115,6 @@
 				91A5B8C52C8123456789ABCD /* MEREApp.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		91A5B8C72C8123456789ABCD /* MEREApp */ = {
-			isa = PBXGroup;
-			children = (
-				91A5B8C82C8123456789ABCD /* MEREApp.swift */,
-				91A5B8CA2C8123456789ABCD /* ContentView.swift */,
-				91A5B8CC2C8123456789ABCD /* EnhancedContentView.swift */,
-				91A5B8CE2C8123456789ABCD /* AudioManager.swift */,
-				91A5B8D02C8123456789ABCD /* WebSocketManager.swift */,
-				91A5B8D22C8123456789ABCD /* AIService.swift */,
-				91A5B8D42C8123456789ABCD /* WebSocketTestView.swift */,
-				91A5B8D62C8123456789ABCD /* Assets.xcassets */,
-				91A5B8DB2C8123456789ABCD /* Info.plist */,
-			);
-			path = MEREApp;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -131,7 +175,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				91A5B8D72C8123456789ABCD /* Assets.xcassets in Resources */,
+				7F6EC6302E54531200498F27 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,13 +186,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				91A5B8CB2C8123456789ABCD /* ContentView.swift in Sources */,
-				91A5B8CD2C8123456789ABCD /* EnhancedContentView.swift in Sources */,
-				91A5B8CF2C8123456789ABCD /* AudioManager.swift in Sources */,
-				91A5B8D12C8123456789ABCD /* WebSocketManager.swift in Sources */,
-				91A5B8D32C8123456789ABCD /* AIService.swift in Sources */,
-				91A5B8D52C8123456789ABCD /* WebSocketTestView.swift in Sources */,
-				91A5B8C92C8123456789ABCD /* MEREApp.swift in Sources */,
+				7F6EC6332E54531200498F27 /* EnhancedContentView.swift in Sources */,
+				7F6EC6342E54531200498F27 /* MEREApp.swift in Sources */,
+				7F6EC6352E54531200498F27 /* NetworkMonitor.swift in Sources */,
+				7F6EC6362E54531200498F27 /* ContentView.swift in Sources */,
+				7F6EC6372E54531200498F27 /* WebSocketTestView.swift in Sources */,
+				7F6EC6382E54531200498F27 /* CoreDataStack.swift in Sources */,
+				7F6EC63A2E54531200498F27 /* AIService.swift in Sources */,
+				7F6EC63D2E54531200498F27 /* DataSyncManager.swift in Sources */,
+				7F6EC63E2E54531200498F27 /* WebSocketManager.swift in Sources */,
+				7F6EC6402E54531200498F27 /* LocalDataManager.swift in Sources */,
+				7F6EC6422E54531200498F27 /* MERE.xcdatamodeld in Sources */,
+				7F6EC6432E54531200498F27 /* AudioManager.swift in Sources */,
+				7F6EC6442E54531200498F27 /* OfflineIntentProcessor.swift in Sources */,
+				7F6EC6502E54531200498F27 /* EventEntity.swift in Sources */,
+				7F6EC6512E54531200498F27 /* MemoEntity.swift in Sources */,
+				7F6EC6522E54531200498F27 /* TodoEntity.swift in Sources */,
+				7F6EC6532E54531200498F27 /* ConversationModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,8 +340,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MERE needs microphone access for voice commands";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "MERE needs network access to communicate with AI backend";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MERE needs microphone access for voice commands";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -322,8 +376,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MERE needs microphone access for voice commands";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "MERE needs network access to communicate with AI backend";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MERE needs microphone access for voice commands";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -368,6 +422,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		7F6EC6252E54531200498F27 /* MERE.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				7F6EC62F2E54531200498F27 /* MERE.xcdatamodel */,
+			);
+			currentVersion = 7F6EC62F2E54531200498F27 /* MERE.xcdatamodel */;
+			path = MERE.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 91A5B8BD2C8123456789ABCD /* Project object */;
 }

@@ -39,7 +39,7 @@ class AIService: ObservableObject {
         // Monitor network changes
         networkMonitor.$isConnected
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isConnected in
+            .sink { [weak self] (isConnected: Bool) in
                 self?.isOfflineMode = !isConnected
                 print("🌐 AIService mode: \(isConnected ? "Online" : "Offline")")
             }
