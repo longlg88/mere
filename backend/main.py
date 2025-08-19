@@ -30,6 +30,14 @@ except ImportError:
     OAUTH_AVAILABLE = False
     logger.warning("OAuth endpoints not available - production calendar features disabled")
 
+# Import Search API endpoints
+try:
+    from search_api import router as search_router
+    SEARCH_AVAILABLE = True
+except ImportError:
+    SEARCH_AVAILABLE = False
+    logger.warning("Search API not available - semantic search features disabled")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,6 +63,13 @@ if OAUTH_AVAILABLE:
     logger.info("OAuth endpoints included - production calendar features enabled")
 else:
     logger.info("OAuth endpoints not included - using development calendar mode")
+
+# Include Search API endpoints
+if SEARCH_AVAILABLE:
+    app.include_router(search_router)
+    logger.info("Search API endpoints included - semantic search features enabled")
+else:
+    logger.info("Search API endpoints not included - semantic search features disabled")
 
 # Enhanced Connection Manager for WebSocket
 class ConnectionManager:

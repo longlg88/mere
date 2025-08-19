@@ -9,6 +9,14 @@ import os
 from datetime import datetime
 import uuid
 
+# Import pgvector for semantic search
+try:
+    from pgvector.sqlalchemy import Vector
+    PGVECTOR_AVAILABLE = True
+except ImportError:
+    PGVECTOR_AVAILABLE = False
+    Vector = None
+
 # Database URL from environment variable
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://mere_user:mere_password@localhost:5432/mere_ai")
 
@@ -95,9 +103,32 @@ def get_db() -> Session:
     finally:
         db.close()
 
+def get_db_session() -> Session:
+    """Get database session for dependency injection"""
+    return SessionLocal()
+
 def init_db():
     """Initialize database tables"""
     Base.metadata.create_all(bind=engine)
+    
+def init_search_db():
+    """Initialize search-specific database features"""
+    from search_models import Base as SearchBase, PGVECTOR_INIT_SQL
+    
+    # Create search tables
+    SearchBase.metadata.create_all(bind=engine)
+    
+    # Initialize pgvector extension and functions
+    if PGVECTOR_AVAILABLE:
+        with engine.connect() as conn:
+            try:
+                conn.execute(PGVECTOR_INIT_SQL)
+                conn.commit()
+                print("✅ pgvector extension and search functions initialized")
+            except Exception as e:
+                print(f"⚠️ pgvector initialization failed: {e}")
+    else:
+        print("⚠️ pgvector not available - semantic search features disabled")
 
 def get_user_by_username(db: Session, username: str) -> User:
     """Get user by username"""
