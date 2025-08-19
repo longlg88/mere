@@ -338,11 +338,20 @@ async def process_voice_command(
             # 2. NLU 처리
             nlu_result = await nlu_service.analyze_intent(text)
             
-            # 3. 응답 템플릿 생성
-            response_text = nlu_service.get_response_template(
-                nlu_result.intent.name,
-                nlu_result.entities
-            )
+            # 3. 비즈니스 로직 실행
+            intent_mapper = get_intent_mapper()
+            user_id = "default_user"  # TODO: 실제 사용자 ID 사용
+            business_result = await intent_mapper.execute_intent(user_id, nlu_result)
+            
+            # 4. 최종 응답 텍스트 결정
+            if business_result and business_result.get("success"):
+                response_text = business_result.get("message", "처리되었습니다.")
+            else:
+                # 실패 시 기본 응답 사용
+                response_text = nlu_service.get_response_template(
+                    nlu_result.intent.name,
+                    nlu_result.entities
+                )
             
             # 4. TTS 오디오 생성 (선택적)
             tts_service = get_tts_service()

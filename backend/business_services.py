@@ -92,19 +92,22 @@ class MemoService:
         self.user_service = UserService()
     
     def create_memo(self, user_id: str, content: str, tags: List[str] = None, 
-                   priority: int = 1, metadata: Dict = None, extra_data: Dict = None) -> Memo:
+                   priority: int = 1, metadata: Dict = None, extra_data: Dict = None, target_date = None) -> Memo:
         """Create a new memo"""
         db = SessionLocal()
         try:
             # Ensure user exists
             user = self.user_service.get_or_create_user(user_id)
             
+            # 목적 날짜가 있으면 그 날짜로, 없으면 현재 시간 사용
+            created_at = target_date if target_date else datetime.utcnow()
+            
             memo = Memo(
                 user_id=user.id,
                 content=content,
                 tags=tags or [],
                 priority=priority,
-                created_at=datetime.utcnow(),
+                created_at=created_at,
                 extra_data=extra_data or metadata or {}
             )
             
@@ -149,6 +152,34 @@ class MemoService:
         except Exception as e:
             logger.error(f"Failed to get memos: {e}")
             raise BusinessServiceError(f"Failed to get memos: {e}")
+        finally:
+            db.close()
+    
+    def get_memos_by_date(self, user_id: str, target_date) -> List[Memo]:
+        """Get memos for a specific date"""
+        db = SessionLocal()
+        try:
+            from datetime import datetime, time
+            
+            # Get the user object first
+            user = self.user_service.get_or_create_user(user_id)
+            
+            # Convert date to datetime range for the full day
+            start_datetime = datetime.combine(target_date, time.min)
+            end_datetime = datetime.combine(target_date, time.max)
+            
+            memos = db.query(Memo).filter(
+                Memo.user_id == user.id,  # Use the actual UUID from user object
+                Memo.created_at >= start_datetime,
+                Memo.created_at <= end_datetime
+            ).order_by(Memo.created_at.desc()).all()
+            
+            logger.info(f"Retrieved {len(memos)} memos for user {user_id} on date {target_date}")
+            return memos
+            
+        except Exception as e:
+            logger.error(f"Failed to get memos by date: {e}")
+            return []
         finally:
             db.close()
     
@@ -273,6 +304,35 @@ class TodoService:
         finally:
             db.close()
     
+    def get_todos_by_date(self, user_id: str, target_date) -> List[Todo]:
+        """Get todos for a specific date (by due_date or created_at)"""
+        db = SessionLocal()
+        try:
+            from datetime import datetime, time
+            user = self.user_service.get_or_create_user(user_id)
+            
+            # Convert date to datetime range for the full day
+            start_datetime = datetime.combine(target_date, time.min)
+            end_datetime = datetime.combine(target_date, time.max)
+            
+            # Search by both due_date and created_at
+            todos = db.query(Todo).filter(
+                Todo.user_id == user.id
+            ).filter(
+                # Either due on this date OR created on this date
+                (Todo.due_date >= start_datetime) & (Todo.due_date <= end_datetime) |
+                (Todo.created_at >= start_datetime) & (Todo.created_at <= end_datetime)
+            ).order_by(Todo.priority.desc(), Todo.created_at.desc()).all()
+            
+            logger.info(f"Retrieved {len(todos)} todos for user {user_id} on date {target_date}")
+            return todos
+            
+        except Exception as e:
+            logger.error(f"Failed to get todos by date: {e}")
+            return []
+        finally:
+            db.close()
+    
     def update_todo_status(self, todo_id: str, status: str) -> Todo:
         """Update todo status"""
         valid_statuses = ["pending", "in_progress", "completed", "cancelled"]
@@ -372,6 +432,14 @@ class IntentActionMapper:
             elif intent_name == "cancel_event":
                 return await self._handle_cancel_event(user_id, entities)
             
+            # Search-related intents
+            elif intent_name == "search_by_date":
+                return await self._handle_search_by_date(user_id, entities)
+            elif intent_name == "search_general":
+                return await self._handle_search_general(user_id, entities)
+            elif intent_name == "search_by_category":
+                return await self._handle_search_by_category(user_id, entities)
+            
             else:
                 # Default response for unsupported intents
                 return {
@@ -400,7 +468,35 @@ class IntentActionMapper:
     
     async def _handle_create_memo(self, user_id: str, entities: Dict) -> Dict[str, Any]:
         """Handle memo creation"""
-        content = entities.get("item_name") or "메모 내용"
+        # 메모 내용을 더 풍부하게 추출
+        content_parts = []
+        
+        # 날짜/시간 정보 추가
+        if entities.get("date_time"):
+            content_parts.append(entities["date_time"])
+        
+        # 주요 아이템/행동 추가
+        if entities.get("item_name"):
+            item = entities["item_name"]
+            # "~기" 형태면 "~러 간다"로 확장
+            if item.endswith("기") and len(item) > 1:
+                base = item[:-1]  # "장보" 
+                content_parts.append(f"{base}러 간다")
+            else:
+                content_parts.append(item)
+        
+        # 추가 컨텍스트
+        if entities.get("location"):
+            content_parts.append(f"@ {entities['location']}")
+        
+        if entities.get("time"):
+            content_parts.append(f"시간: {entities['time']}")
+        
+        # 최종 메모 내용 구성
+        if content_parts:
+            content = " ".join(content_parts)
+        else:
+            content = "메모 내용"
         priority = 1
         tags = []
         
@@ -416,11 +512,21 @@ class IntentActionMapper:
         if entities.get("category"):
             tags.append(entities["category"])
         
+        # 메모 생성시 날짜 정보 반영
+        target_date = None
+        if entities.get("parsed_datetime"):
+            try:
+                from datetime import datetime
+                target_date = datetime.fromisoformat(entities["parsed_datetime"].replace('Z', '+00:00'))
+            except:
+                pass
+        
         memo = self.memo_service.create_memo(
             user_id=user_id,
             content=content,
             tags=tags,
             priority=priority,
+            target_date=target_date,  # 특정 날짜 지정
             extra_data={"entities": entities}
         )
         
@@ -668,6 +774,191 @@ class IntentActionMapper:
                 "message": "일정 취소 중 오류가 발생했습니다.",
                 "error": str(e)
             }
+    
+    # Search handlers
+    async def _handle_search_by_date(self, user_id: str, entities: Dict) -> Dict[str, Any]:
+        """Handle search by date (e.g., '나 내일 뭐해?')"""
+        try:
+            from datetime import datetime, timedelta
+            
+            # Parse date from entities
+            date_time_str = entities.get("date_time", "")
+            parsed_datetime_str = entities.get("parsed_datetime", "")
+            
+            # Determine the target date
+            target_date = None
+            if parsed_datetime_str:
+                try:
+                    target_date = datetime.fromisoformat(parsed_datetime_str.replace('Z', '+00:00')).date()
+                except:
+                    pass
+            
+            if not target_date:
+                # Default to tomorrow if no specific date
+                target_date = (datetime.now() + timedelta(days=1)).date()
+            
+            # Search across all data types for the target date
+            results = []
+            
+            # Search memos
+            memos = self.memo_service.get_memos_by_date(user_id, target_date)
+            for memo in memos:
+                content = memo.content or "내용 없음"
+                results.append({
+                    "type": "memo",
+                    "id": str(memo.id),
+                    "title": content[:30] + "..." if len(content) > 30 else content,  # Use content as title
+                    "content": content[:100] + "..." if len(content) > 100 else content,
+                    "created_at": memo.created_at.isoformat()
+                })
+            
+            # Search todos  
+            todos = self.todo_service.get_todos_by_date(user_id, target_date)
+            for todo in todos:
+                results.append({
+                    "type": "todo", 
+                    "id": str(todo.id),
+                    "title": todo.title or "제목 없음",
+                    "completed": todo.status == "completed",
+                    "status": todo.status,
+                    "due_date": todo.due_date.isoformat() if todo.due_date else None
+                })
+            
+            # Search events (calendar items)
+            events = self.calendar_processor.get_events_by_date(target_date)
+            for event in events:
+                results.append({
+                    "type": "event",
+                    "id": event.get("id", "unknown"),
+                    "title": event.get("title", "제목 없음"),
+                    "start_time": event.get("start_time"),
+                    "location": event.get("location")
+                })
+            
+            # GPT를 활용한 자연스러운 응답 생성
+            date_str = target_date.strftime("%Y년 %m월 %d일")
+            if results:
+                message = await self._generate_natural_schedule_response(date_str, results)
+            else:
+                message = f"{date_str}에는 등록된 메모, 할일, 일정이 없습니다."
+            
+            return {
+                "success": True,
+                "action": "search_by_date",
+                "message": message,
+                "data": {
+                    "target_date": target_date.isoformat(),
+                    "results": results,
+                    "count": len(results)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Search by date error: {e}")
+            return {
+                "success": False,
+                "action": "search_by_date",
+                "message": f"날짜별 검색 중 오류가 발생했습니다: {str(e)}",
+                "error": str(e)
+            }
+    
+    async def _handle_search_general(self, user_id: str, entities: Dict) -> Dict[str, Any]:
+        """Handle general search"""
+        return {
+            "success": True,
+            "action": "search_general", 
+            "message": "일반 검색 기능은 아직 구현되지 않았습니다.",
+            "data": None
+        }
+    
+    async def _handle_search_by_category(self, user_id: str, entities: Dict) -> Dict[str, Any]:
+        """Handle search by category"""
+        return {
+            "success": True,
+            "action": "search_by_category",
+            "message": "카테고리별 검색 기능은 아직 구현되지 않았습니다.", 
+            "data": None
+        }
+    
+    async def _generate_natural_schedule_response(self, date_str: str, results: list) -> str:
+        """GPT를 활용해서 자연스러운 일정 응답 생성"""
+        try:
+            import asyncio
+            
+            # 결과 데이터를 간단하게 정리
+            items_summary = []
+            for item in results:
+                if item["type"] == "memo":
+                    items_summary.append(f"메모: {item['content']}")
+                elif item["type"] == "todo":
+                    status = "완료됨" if item["completed"] else "해야 할 일"
+                    items_summary.append(f"할일: {item['title']} ({status})")
+                elif item["type"] == "event":
+                    items_summary.append(f"일정: {item['title']}")
+            
+            # GPT를 활용한 자연스러운 응답 생성
+            system_prompt = """당신은 개인 비서입니다. 사용자의 일정과 메모를 자연스럽고 친근한 방식으로 알려주세요.
+
+요구사항:
+- 정중하면서도 친근한 말투 사용
+- 불필요한 기호나 특수문자는 피하고 깔끔하게
+- 각 항목을 자연스럽게 나열
+- 실제 내용을 간단명료하게 전달
+- 개인 비서처럼 자연스럽게
+
+예시:
+"내일은 다음과 같은 일정이 있으시네요.
+장보러 가실 예정이시고,
+오후 2시에 회의가 있습니다.
+그리고 운동 계획이 있으시네요."
+"""
+            
+            user_prompt = f"{date_str}에 다음 항목들이 있습니다: " + ", ".join(items_summary) + "\n\n이를 개인 비서처럼 자연스럽고 친근하게 알려주세요."
+            
+            # OpenAI API 호출
+            try:
+                from openai import OpenAI
+                import os
+                
+                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                response = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        max_tokens=200,
+                        temperature=0.7
+                    )
+                )
+                
+                natural_response = response.choices[0].message.content.strip()
+                return natural_response
+                
+            except Exception as gpt_error:
+                logger.warning(f"GPT 응답 생성 실패: {gpt_error}")
+                return self._generate_simple_schedule_response(date_str, results)
+                
+        except Exception as e:
+            logger.error(f"자연스러운 응답 생성 실패: {e}")
+            return self._generate_simple_schedule_response(date_str, results)
+    
+    def _generate_simple_schedule_response(self, date_str: str, results: list) -> str:
+        """간단하고 깔끔한 기본 응답 생성"""
+        lines = [f"{date_str}에 다음 항목들이 있습니다."]
+        
+        for item in results:
+            if item["type"] == "memo":
+                lines.append(f"메모로 {item['content']}")
+            elif item["type"] == "todo":
+                status = " (완료)" if item["completed"] else ""
+                lines.append(f"할일로 {item['title']}{status}")
+            elif item["type"] == "event":
+                lines.append(f"일정으로 {item['title']}")
+        
+        return ". ".join(lines) + "이 예정되어 있습니다."
 
 # Global service instances
 memo_service = MemoService()

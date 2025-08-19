@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class WhisperSTTService:
     """Whisper 기반 STT 서비스"""
     
-    def __init__(self, model_size: str = "base"):
+    def __init__(self, model_size: str = "small"):
         """
         STT 서비스 초기화
         
@@ -72,26 +72,55 @@ class WhisperSTTService:
     
     def _transcribe_sync(self, audio_file_path: str, language: str) -> dict:
         """동기적 Whisper 실행"""
-        return self.model.transcribe(
-            audio_file_path,
-            language=language,
-            task="transcribe",
-            fp16=False,  # CPU에서는 fp16 비활성화
-            verbose=False
-        )
+        # 한국어 최적화 설정
+        options = {
+            "language": language,
+            "task": "transcribe",
+            "fp16": False,  # CPU에서는 fp16 비활성화
+            "verbose": False,
+            "beam_size": 5,  # 더 나은 결과를 위해 beam size 증가
+            "best_of": 5,    # 더 많은 후보 중 선택
+            "temperature": 0.0,  # 결정적 결과를 위해 temperature 0으로 설정
+        }
+        
+        # 한국어인 경우 추가 최적화
+        if language == "ko":
+            options.update({
+                "condition_on_previous_text": False,  # 이전 텍스트에 의존하지 않음
+                "compression_ratio_threshold": 2.4,  # 압축 비율 임계값
+                "logprob_threshold": -1.0,          # 로그 확률 임계값
+                "no_speech_threshold": 0.6          # 무음 임계값
+            })
+        
+        return self.model.transcribe(audio_file_path, **options)
     
     def _calculate_confidence(self, result: dict) -> float:
         """STT 결과의 신뢰도 계산"""
         try:
             if "segments" in result and result["segments"]:
-                # 각 세그먼트의 no_speech_prob 평균 계산
-                no_speech_probs = [seg.get("no_speech_threshold", 0.6) for seg in result["segments"]]
-                avg_no_speech = sum(no_speech_probs) / len(no_speech_probs)
-                # no_speech_prob가 낮을수록 신뢰도가 높음
-                confidence = max(0.0, min(1.0, 1.0 - avg_no_speech))
-                return confidence
-            return 0.8  # 기본 신뢰도
-        except Exception:
+                # 각 세그먼트의 신뢰도 점수 수집
+                segment_confidences = []
+                for seg in result["segments"]:
+                    # no_speech_prob가 낮을수록 음성이 있다는 의미
+                    no_speech_prob = seg.get("no_speech_prob", 0.5)
+                    # avg_logprob는 평균 로그 확률 (높을수록 좋음, 보통 음수값)
+                    avg_logprob = seg.get("avg_logprob", -1.0)
+                    
+                    # 종합 신뢰도 계산 (0~1 범위로 정규화)
+                    speech_confidence = 1.0 - no_speech_prob
+                    logprob_confidence = max(0.0, min(1.0, (avg_logprob + 2.0) / 2.0))  # -2~0을 0~1로 변환
+                    
+                    segment_confidence = (speech_confidence + logprob_confidence) / 2.0
+                    segment_confidences.append(segment_confidence)
+                
+                if segment_confidences:
+                    # 전체 신뢰도는 세그먼트 신뢰도의 평균
+                    overall_confidence = sum(segment_confidences) / len(segment_confidences)
+                    return max(0.1, min(1.0, overall_confidence))
+            
+            return 0.6  # 기본 신뢰도
+        except Exception as e:
+            logger.warning(f"신뢰도 계산 실패: {e}")
             return 0.5
     
     async def transcribe_audio_data(self, audio_data: bytes, sample_rate: int = 16000, language: str = "ko") -> Tuple[str, float]:

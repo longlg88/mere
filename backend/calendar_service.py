@@ -573,6 +573,17 @@ class CalendarIntentProcessor:
                 'success': False,
                 'message': '일정 취소 중 오류가 발생했습니다.'
             }
+    
+    def get_events_by_date(self, target_date):
+        """Get calendar events for a specific date"""
+        try:
+            # This is a placeholder implementation
+            # In a real system, this would integrate with Google Calendar API
+            # For now, return empty list since calendar integration is not fully implemented
+            return []
+        except Exception as e:
+            logger.error(f"Failed to get events by date: {e}")
+            return []
 
 # Global calendar processor instance
 calendar_processor = CalendarIntentProcessor()
